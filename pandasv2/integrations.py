@@ -1,5 +1,5 @@
 """
-Web framework integrations for pandas2.
+Web framework integrations for pandasv2.
 
 Provides zero-configuration helpers for:
 - FastAPI: Automatic JSONResponse handling
@@ -20,7 +20,7 @@ class FastAPIResponse:
 
     Usage:
         >>> from fastapi import FastAPI
-        >>> from pandas2 import FastAPIResponse
+        >>> from pandasv2 import FastAPIResponse
         >>> app = FastAPI()
         >>>
         >>> @app.get("/data")
@@ -59,7 +59,7 @@ class FlaskResponse:
 
     Usage:
         >>> from flask import Flask
-        >>> from pandas2 import FlaskResponse
+        >>> from pandasv2 import FlaskResponse
         >>> app = Flask(__name__)
         >>>
         >>> @app.route("/data")
@@ -99,7 +99,7 @@ class DjangoResponse:
 
     Usage:
         >>> from django.http import JsonResponse
-        >>> from pandas2 import DjangoResponse
+        >>> from pandasv2 import DjangoResponse
         >>>
         >>> def get_data(request):
         >>>     df = pd.read_csv("data.csv")
@@ -141,7 +141,7 @@ def setup_json_encoder(app: Any, framework: str = 'auto') -> None:
     Configure app's JSON encoder globally.
 
     Automatically detects framework (FastAPI, Flask, Django) and
-    sets up pandas2.JSONEncoder as the default.
+    sets up pandasv2.JSONEncoder as the default.
 
     Args:
         app: Application instance (FastAPI, Flask, Django)
@@ -149,9 +149,9 @@ def setup_json_encoder(app: Any, framework: str = 'auto') -> None:
 
     Example:
         >>> from fastapi import FastAPI
-        >>> import pandas2
+        >>> import pandasv2
         >>> app = FastAPI()
-        >>> pandas2.setup_json_encoder(app)
+        >>> pandasv2.setup_json_encoder(app)
     """
     if framework == 'auto':
         # Auto-detect framework
@@ -203,9 +203,9 @@ def create_response_handler(
 
     Example:
         >>> from fastapi import FastAPI
-        >>> import pandas2
+        >>> import pandasv2
         >>>
-        >>> handler = pandas2.create_response_handler()
+        >>> handler = pandasv2.create_response_handler()
         >>> app = FastAPI()
         >>> app.add_middleware(handler)
     """
@@ -236,9 +236,9 @@ def json_middleware(encoder: type = JSONEncoder) -> Callable:
 
     Example:
         >>> from fastapi import FastAPI
-        >>> import pandas2
+        >>> import pandasv2
         >>> app = FastAPI()
-        >>> app.add_middleware(pandas2.json_middleware())
+        >>> app.add_middleware(pandasv2.json_middleware())
     """
     def middleware(app):
         async def asgi(scope, receive, send):

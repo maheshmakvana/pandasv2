@@ -1,6 +1,6 @@
-# Contributing to pandas2
+# Contributing to pandasv2
 
-Thank you for your interest in contributing to pandas2! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to pandasv2! This document provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 
@@ -9,7 +9,7 @@ Be respectful, inclusive, and constructive in all interactions.
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/pandas2.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/pandasv2.git`
 3. Create a virtual environment: `python -m venv venv`
 4. Activate it: `source venv/bin/activate` (or `venv\Scripts\activate` on Windows)
 5. Install development dependencies: `pip install -e .[dev]`
@@ -20,7 +20,7 @@ Be respectful, inclusive, and constructive in all interactions.
 1. Make your changes in a feature branch
 2. Add tests for new functionality in `tests/test_core.py`
 3. Ensure all tests pass: `pytest tests/ -v`
-4. Run with coverage: `pytest tests/ --cov=pandas2`
+4. Run with coverage: `pytest tests/ --cov=pandasv2`
 5. Keep code consistent with existing style
 
 ## Commit Guidelines
@@ -50,7 +50,7 @@ pytest tests/ -v
 pytest tests/test_core.py -v
 
 # Run with coverage report
-pytest tests/ --cov=pandas2 --cov-report=html
+pytest tests/ --cov=pandasv2 --cov-report=html
 ```
 
 ## Style Guidelines
@@ -66,6 +66,6 @@ pytest tests/ --cov=pandas2 --cov-report=html
 - Start a discussion for features
 - Contact: [Mahesh Makvana](https://github.com/maheshmakvana)
 
-Thank you for contributing to pandas2!
+Thank you for contributing to pandasv2!
 
 Built by Mahesh Makvana

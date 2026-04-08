@@ -1,1 +1,1 @@
-# pandas2 test suite
+# pandasv2 test suite

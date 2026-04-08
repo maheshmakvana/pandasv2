@@ -1,5 +1,5 @@
 """
-Unit tests for pandas2 core functionality.
+Unit tests for pandasv2 core functionality.
 
 Tests JSON serialization, deserialization, and DataFrame handling.
 
@@ -12,14 +12,14 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 
-import pandas2
-from pandas2 import (
+import pandasv2
+from pandasv2 import (
     JSONEncoder, JSONDecoder,
     to_json, from_json,
     serialize, deserialize,
     DataFrameWrapper,
 )
-from pandas2.converters import (
+from pandasv2.converters import (
     pandas_to_json, json_to_pandas,
     dataframe_to_records, series_to_list,
     infer_dtype, safe_cast, batch_convert,

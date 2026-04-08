@@ -1,5 +1,5 @@
 """
-Core pandas2 serialization and deserialization functionality.
+Core pandasv2 serialization and deserialization functionality.
 
 Handles:
 - JSON encoding of pandas/NumPy types (int64, float64, NaT, NaN, Categorical, etc.)
@@ -32,7 +32,7 @@ class JSONEncoder(json.JSONEncoder):
     Usage:
         >>> import json
         >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [1.1, 2.2, 3.3]})
-        >>> json.dumps(df, cls=pandas2.JSONEncoder)
+        >>> json.dumps(df, cls=pandasv2.JSONEncoder)
     """
 
     def default(self, obj: Any) -> Any:
@@ -118,7 +118,7 @@ class JSONDecoder(json.JSONDecoder):
     Usage:
         >>> import json
         >>> json_str = '{"__type__": "DataFrame", ...}'
-        >>> json.loads(json_str, cls=pandas2.JSONDecoder)
+        >>> json.loads(json_str, cls=pandasv2.JSONDecoder)
     """
 
     def __init__(self, *args, **kwargs):
@@ -187,8 +187,8 @@ def to_json(obj: Any, **kwargs) -> str:
 
     Example:
         >>> df = pd.DataFrame({'a': [1, 2, 3]})
-        >>> json_str = pandas2.to_json(df)
-        >>> df_restored = pandas2.from_json(json_str)
+        >>> json_str = pandasv2.to_json(df)
+        >>> df_restored = pandasv2.from_json(json_str)
     """
     return json.dumps(obj, cls=JSONEncoder, **kwargs)
 
@@ -208,7 +208,7 @@ def from_json(json_str: str, **kwargs) -> Any:
 
     Example:
         >>> json_str = '{"__type__": "DataFrame", "data": [...]}'
-        >>> df = pandas2.from_json(json_str)
+        >>> df = pandasv2.from_json(json_str)
     """
     return json.loads(json_str, cls=JSONDecoder, **kwargs)
 
@@ -226,8 +226,8 @@ def serialize(obj: Any, include_metadata: bool = True) -> Dict:
 
     Example:
         >>> df = pd.DataFrame({'a': pd.date_range('2024-01-01', periods=3)})
-        >>> serialized = pandas2.serialize(df)
-        >>> reconstructed = pandas2.deserialize(serialized)
+        >>> serialized = pandasv2.serialize(df)
+        >>> reconstructed = pandasv2.deserialize(serialized)
     """
     if isinstance(obj, pd.DataFrame):
         return {
@@ -273,8 +273,8 @@ def deserialize(data: Dict, strict: bool = False) -> Any:
         ValueError: If strict=True and dtype cannot be restored
 
     Example:
-        >>> serialized = pandas2.serialize(df)
-        >>> df_restored = pandas2.deserialize(serialized)
+        >>> serialized = pandasv2.serialize(df)
+        >>> df_restored = pandasv2.deserialize(serialized)
     """
     if not isinstance(data, dict):
         return data
@@ -329,7 +329,7 @@ class DataFrameWrapper:
 
     Usage:
         >>> df = pd.DataFrame({'a': [1, 2, 3]})
-        >>> wrapped = pandas2.DataFrameWrapper(df)
+        >>> wrapped = pandasv2.DataFrameWrapper(df)
         >>> json_str = wrapped.to_json()
         >>> df_restored = wrapped.from_json(json_str)
     """

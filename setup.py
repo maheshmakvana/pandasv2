@@ -1,5 +1,5 @@
 """
-Setup script for pandas2 - Advanced Pandas for Web Applications
+Setup script for pandasv2 - Advanced Pandas for Web Applications
 
 Installation: pip install -e .
 PyPI deployment: twine upload dist/*
@@ -19,18 +19,18 @@ def read_file(filename):
     return ''
 
 setup(
-    name='pandas2',
+    name='pandasv2',
     version='1.0.0',
     author='Mahesh Makvana',
     author_email='mahesh.makvana@example.com',
     description='Advanced Pandas for Web Applications - JSON serialization, DataFrame web integration, type-safe conversions',
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
-    url='https://github.com/maheshmakvana/pandas2',
+    url='https://github.com/maheshmakvana/pandasv2',
     project_urls={
-        'Source': 'https://github.com/maheshmakvana/pandas2',
-        'Tracker': 'https://github.com/maheshmakvana/pandas2/issues',
-        'Documentation': 'https://github.com/maheshmakvana/pandas2#readme',
+        'Source': 'https://github.com/maheshmakvana/pandasv2',
+        'Tracker': 'https://github.com/maheshmakvana/pandasv2/issues',
+        'Documentation': 'https://github.com/maheshmakvana/pandasv2#readme',
     },
     license='MIT',
     packages=find_packages(),
@@ -48,7 +48,7 @@ setup(
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'Intended Audience :: Data Scientists',
+        'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',

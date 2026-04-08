@@ -42,7 +42,7 @@ def pandas_to_json(
 
     Example:
         >>> df = pd.DataFrame({'a': [1, 2, np.nan], 'b': ['x', 'y', 'z']})
-        >>> json_data = pandas2.pandas_to_json(df, orient='records')
+        >>> json_data = pandasv2.pandas_to_json(df, orient='records')
     """
     if not isinstance(obj, (pd.DataFrame, pd.Series)):
         raise TypeError(f"Expected DataFrame or Series, got {type(obj)}")
@@ -169,7 +169,7 @@ def json_to_pandas(
 
     Example:
         >>> json_data = {'data': [{'a': 1, 'b': 'x'}]}
-        >>> df = pandas2.json_to_pandas(json_data)
+        >>> df = pandasv2.json_to_pandas(json_data)
     """
     if isinstance(data, str):
         data = json.loads(data)
@@ -225,7 +225,7 @@ def dataframe_to_records(
 
     Example:
         >>> df = pd.DataFrame({'a': [1, 2], 'b': [np.nan, 4.0]})
-        >>> records = pandas2.dataframe_to_records(df)
+        >>> records = pandasv2.dataframe_to_records(df)
     """
     records = []
     for idx, row in df.iterrows():
@@ -252,7 +252,7 @@ def series_to_list(
 
     Example:
         >>> s = pd.Series([1, np.nan, 3])
-        >>> lst = pandas2.series_to_list(s)
+        >>> lst = pandasv2.series_to_list(s)
     """
     return [_to_json_safe(v) for v in series]
 
@@ -272,7 +272,7 @@ def infer_dtype(
         dtype string ('int64', 'float64', 'object', 'datetime64[ns]', etc.)
 
     Example:
-        >>> dtype = pandas2.infer_dtype([1, 2, 3])
+        >>> dtype = pandasv2.infer_dtype([1, 2, 3])
         'int64'
     """
     if isinstance(data, pd.Series):
@@ -330,7 +330,7 @@ def safe_cast(
         ValueError: If errors='raise' and cast fails
 
     Example:
-        >>> result = pandas2.safe_cast(['1', '2', '3'], 'int64')
+        >>> result = pandasv2.safe_cast(['1', '2', '3'], 'int64')
     """
     if isinstance(data, pd.Series):
         try:
@@ -375,7 +375,7 @@ def batch_convert(
 
     Example:
         >>> dfs = [df1, df2, df3]
-        >>> json_strs = pandas2.batch_convert(dfs, operation='to_json')
+        >>> json_strs = pandasv2.batch_convert(dfs, operation='to_json')
     """
     results = []
     for item in data:
@@ -411,7 +411,7 @@ def preserve_metadata(
     Example:
         >>> df = pd.DataFrame({'a': [1, 2, 3]})
         >>> meta = {'source': 'api', 'version': 1}
-        >>> df_with_meta = pandas2.preserve_metadata(df, meta)
+        >>> df_with_meta = pandasv2.preserve_metadata(df, meta)
         >>> retrieved_meta = df_with_meta.attrs
     """
     df.attrs.update(metadata)

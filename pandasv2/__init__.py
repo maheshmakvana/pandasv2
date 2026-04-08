@@ -1,5 +1,5 @@
 """
-pandas2 - Advanced Pandas for Web Applications
+pandasv2 - Advanced Pandas for Web Applications
 
 Solves critical pain points when using pandas DataFrames in web applications:
 - JSON serialization of NumPy/pandas types (int64, float64, NaT, etc.)
@@ -10,7 +10,7 @@ Solves critical pain points when using pandas DataFrames in web applications:
 - Production-ready performance
 
 Built by Mahesh Makvana
-https://github.com/maheshmakvana/pandas2
+https://github.com/maheshmakvana/pandasv2
 """
 
 __version__ = "1.0.0"
