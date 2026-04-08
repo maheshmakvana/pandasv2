@@ -316,6 +316,14 @@ class Series(_pd.Series):
         from .plotting import PlotAccessor
         return PlotAccessor(self)
 
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        # Fix pandas #60611: segfault when np.ufunc called with where=Series.
+        if 'where' in kwargs:
+            w = kwargs['where']
+            if isinstance(w, (_pd.Series, _pd.DataFrame)):
+                kwargs['where'] = _np.asarray(w)
+        return super().__array_ufunc__(ufunc, method, *inputs, **kwargs)
+
     def __repr__(self) -> str:
         base = super().__repr__()
         return f"[pandasv2.Series]\n{base}"

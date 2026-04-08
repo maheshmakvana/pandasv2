@@ -112,6 +112,19 @@ def read_csv(
     if dtype_backend is not _pd.api.extensions.no_default:
         kwargs['dtype_backend'] = dtype_backend
 
+    # Fix pandas #52493: literal string "None" was silently coerced to NaN.
+    # Preserve it by removing it from the default NA values list.
+    if na_values is None and keep_default_na:
+        import pandas.io.parsers as _parsers
+        default_na = set(getattr(_parsers, 'STR_NA_VALUES',
+                                 {'', '#N/A', '#N/A N/A', '#NA', '-1.#IND',
+                                  '-1.#QNAN', '-NaN', '-nan', '1.#IND',
+                                  '1.#QNAN', '<NA>', 'N/A', 'NA', 'NULL',
+                                  'NaN', 'None', 'n/a', 'nan', 'null'}))
+        default_na.discard('None')
+        kwargs['na_values'] = list(default_na)
+        kwargs['keep_default_na'] = False
+
     result = _pd.read_csv(filepath_or_buffer, **kwargs)
     return _wrap(result)
 
@@ -210,7 +223,23 @@ def read_json(
     if engine is not None:
         kwargs['engine'] = engine
 
-    result = _pd.read_json(path_or_buf, **kwargs)
+    # Fix pandas #52595: orient='table' with tz-aware datetimes raises
+    # "Cannot use .astype to convert from timezone-aware dtype to timezone-naive".
+    try:
+        result = _pd.read_json(path_or_buf, **kwargs)
+    except TypeError as e:
+        if orient == 'table' and 'timezone' in str(e).lower():
+            # Re-read without convert_dates and fix tz manually
+            kwargs2 = dict(kwargs)
+            kwargs2['convert_dates'] = False
+            result = _pd.read_json(path_or_buf, **kwargs2)
+            for col in result.select_dtypes(include='object').columns:
+                try:
+                    result[col] = _pd.to_datetime(result[col], utc=True)
+                except Exception:
+                    pass
+        else:
+            raise
     return _wrap(result)
 
 
@@ -301,13 +330,37 @@ def read_sql_query(
     parse_dates=None, chunksize=None, dtype=None,
     dtype_backend=_pd.api.extensions.no_default,
 ):
-    """Read SQL query into a pandasv2 DataFrame."""
+    """Read SQL query into a pandasv2 DataFrame.
+
+    Fixes pandas #52437: dict-cursor adapters (e.g. pymssql as_dict=True)
+    caused column headers to fill every cell.  We detect list-of-dicts
+    results and build the DataFrame directly.
+    """
     kw = dict(index_col=index_col, coerce_float=coerce_float, params=params,
               parse_dates=parse_dates, chunksize=chunksize)
     for param, val in [('dtype', dtype), ('dtype_backend', dtype_backend)]:
         if val is not _pd.api.extensions.no_default:
             kw[param] = val
-    return _wrap(_pd.read_sql_query(sql, con, **kw))
+    try:
+        result = _pd.read_sql_query(sql, con, **kw)
+        # Detect the pandas #52437 symptom: first row values equal column names
+        if (isinstance(result, _pd.DataFrame) and len(result) > 0
+                and list(result.iloc[0]) == list(result.columns)):
+            raise ValueError("dict-cursor detected")
+        return _wrap(result)
+    except Exception:
+        # Fallback: execute manually and build from list-of-dicts
+        try:
+            cursor = con.cursor()
+            cursor.execute(sql, params or [])
+            rows = cursor.fetchall()
+            if rows and isinstance(rows[0], dict):
+                from .dataframe import DataFrame
+                return DataFrame(rows)
+        except Exception:
+            pass
+        # Re-run original path if fallback also fails
+        return _wrap(_pd.read_sql_query(sql, con, **kw))
 
 
 def read_sql_table(

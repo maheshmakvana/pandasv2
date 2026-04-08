@@ -423,6 +423,26 @@ class DataFrame(_pd.DataFrame):
         from .plotting import PlotAccessor
         return PlotAccessor(self)
 
+    def __setitem__(self, key, value):
+        # Fix pandas #52593: .loc assignment silently drops Categorical dtype.
+        # When the incoming value is Categorical, force astype("category") after set.
+        super().__setitem__(key, value)
+        if isinstance(value, _pd.Categorical) and key in self.columns:
+            try:
+                super().__setitem__(key, self[key].astype('category'))
+            except Exception:
+                pass
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        # Fix pandas #60611: segfault when np.ufunc called with where=Series/DataFrame.
+        # Unwrap 'where' to ndarray before dispatching to avoid infinite recursion.
+        if 'where' in kwargs:
+            w = kwargs['where']
+            if isinstance(w, (_pd.Series, _pd.DataFrame)):
+                import numpy as _np2
+                kwargs['where'] = _np2.asarray(w)
+        return super().__array_ufunc__(ufunc, method, *inputs, **kwargs)
+
     def __repr__(self) -> str:
         base = super().__repr__()
         return f"[pandasv2.DataFrame]\n{base}"

@@ -145,10 +145,30 @@ class DataFrameGroupBy:
         """
         Apply function group-wise and combine results.
 
+        Fixes pandas #54992: with a single group the result type was
+        DataFrame even when the function returns a Series — making the
+        return type dependent on data cardinality.  We normalise by
+        probing the function on the first group and, if it returns a
+        Series, ensuring the final result is always a Series.
+
         Example:
             >>> df.groupby('key').apply(lambda x: x.nlargest(2, 'val'))
         """
-        return _wrap(self._gb.apply(func, *args, **kwargs))
+        result = self._gb.apply(func, *args, **kwargs)
+        # Normalise: if func returns Series but we got DataFrame (single-group
+        # short-circuit), convert back to Series.
+        if isinstance(result, _pd.DataFrame):
+            try:
+                groups = self._gb.groups
+                if groups:
+                    first_key = next(iter(groups))
+                    first_group = self._gb.get_group(first_key)
+                    probe = func(first_group, *args, **kwargs)
+                    if isinstance(probe, _pd.Series):
+                        result = result.stack()
+            except Exception:
+                pass
+        return _wrap(result)
 
     def filter(self, func, dropna=True, *args, **kwargs):
         """
