@@ -20,10 +20,10 @@ def read_file(filename):
 
 setup(
     name='pandasv2',
-    version='1.0.0',
+    version='2.0.0',
     author='Mahesh Makvana',
     author_email='mahesh.makvana@example.com',
-    description='Advanced Pandas for Web Applications - JSON serialization, DataFrame web integration, type-safe conversions',
+    description='Full pandas replacement with built-in JSON serialization and web framework integration',
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
     url='https://github.com/maheshmakvana/pandasv2',

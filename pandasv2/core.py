@@ -63,8 +63,13 @@ class JSONEncoder(json.JSONEncoder):
             return {'left': obj.left, 'right': obj.right, 'closed': obj.closed}
         if isinstance(obj, pd.Categorical):
             return obj.astype(str).tolist()
-        if pd.isna(obj):
-            return None
+
+        # Scalar NA check (must come before DataFrame/Series to avoid ambiguity)
+        try:
+            if not isinstance(obj, (pd.DataFrame, pd.Series, pd.Index, np.ndarray)) and pd.isna(obj):
+                return None
+        except (TypeError, ValueError):
+            pass
 
         # pandas DataFrame
         if isinstance(obj, pd.DataFrame):
