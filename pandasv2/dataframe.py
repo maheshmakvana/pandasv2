@@ -333,6 +333,96 @@ class DataFrame(_pd.DataFrame):
     # String representation
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Styling
+    # ------------------------------------------------------------------
+
+    @property
+    def style(self):
+        """
+        Return a pandasv2 Styler for this DataFrame.
+
+        All pandas Styler methods work unchanged, plus extra helpers:
+          .to_web()       — rendered HTML string for web responses
+          .to_json_safe() — underlying data as lossless JSON
+          .export_css()   — extract generated CSS rules
+
+        Example:
+            >>> df.style.background_gradient().to_web()
+        """
+        from .styling import Styler
+        return Styler(super().style)
+
+    # ------------------------------------------------------------------
+    # Window (explicit wrappers that return pandasv2 types)
+    # ------------------------------------------------------------------
+
+    def rolling(self, window, min_periods=None, center=False, win_type=None,
+                on=None, closed=None, step=None, method='single'):
+        """
+        Provide rolling window calculations, returning pandasv2 Rolling.
+
+        Example:
+            >>> df.rolling(7).mean()
+            >>> df.rolling('30D', on='date').std()
+        """
+        from .window import Rolling
+        kw = dict(min_periods=min_periods, center=center,
+                  win_type=win_type, on=on, closed=closed, method=method)
+        if step is not None:
+            kw['step'] = step
+        return Rolling(super().rolling(window, **kw))
+
+    def expanding(self, min_periods=1, method='single'):
+        """
+        Provide expanding window calculations, returning pandasv2 Expanding.
+
+        Example:
+            >>> df.expanding().mean()
+        """
+        from .window import Expanding
+        return Expanding(super().expanding(min_periods=min_periods, method=method))
+
+    def ewm(self, com=None, span=None, halflife=None, alpha=None,
+            min_periods=0, adjust=True, ignore_na=False, times=None,
+            method='single'):
+        """
+        Provide exponentially weighted calculations, returning pandasv2 EWM.
+
+        Example:
+            >>> df.ewm(span=12).mean()
+        """
+        from .window import ExponentialMovingWindow
+        kw = dict(min_periods=min_periods, adjust=adjust,
+                  ignore_na=ignore_na, method=method)
+        for k, v in [('com', com), ('span', span), ('halflife', halflife),
+                     ('alpha', alpha), ('times', times)]:
+            if v is not None:
+                kw[k] = v
+        return ExponentialMovingWindow(super().ewm(**kw))
+
+    # ------------------------------------------------------------------
+    # Plotting
+    # ------------------------------------------------------------------
+
+    @property
+    def plot(self):
+        """
+        Return a pandasv2 PlotAccessor for this DataFrame.
+
+        All standard plot types work (line, bar, hist, scatter, etc.).
+        Extra methods on the result object:
+          .to_base64()  — base64 PNG for API responses
+          .to_html()    — inline <img> tag
+          .to_bytes()   — raw PNG bytes
+          .save(path)   — save to file
+
+        Example:
+            >>> df.plot.bar(x='date', y='value').to_web()
+        """
+        from .plotting import PlotAccessor
+        return PlotAccessor(self)
+
     def __repr__(self) -> str:
         base = super().__repr__()
         return f"[pandasv2.DataFrame]\n{base}"

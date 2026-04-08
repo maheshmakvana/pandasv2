@@ -19,6 +19,15 @@ All standard pandas features are available:
 - All dtype objects, Index types, Categorical, NA, NaT, …
 - JSONEncoder / JSONDecoder for web frameworks
 - FastAPI / Flask / Django response helpers
+- df.style  — full Styler with .to_web() and .to_base64() extras
+- df.plot   — full PlotAccessor with .to_base64() / .to_html() / .to_bytes()
+- rolling / expanding / ewm — all return pandasv2 types
+- ExcelWriter — context manager with write_many / write_with_style
+- pd.testing — extended assert_* suite
+- pd.api.types — full type-checking + pandasv2 extras
+- pd.arrays   — all extension arrays + to_arrow / from_arrow
+- pd.plotting — scatter_matrix, andrews_curves, lag_plot, …
+- pd.offsets  — all offset classes + business day helpers
 
 Built by Mahesh Makvana
 https://github.com/maheshmakvana/pandasv2
@@ -149,7 +158,7 @@ from .analytics import (
     reset_option,
     describe_option,
     option_context,
-    # Offsets
+    # Offsets (basic alias — full namespace below)
     offsets,
 )
 
@@ -191,10 +200,44 @@ from .integrations import (
 from .groupby import DataFrameGroupBy, SeriesGroupBy
 
 # ---------------------------------------------------------------------------
-# testing namespace (mirrors pandas.testing)
+# ExcelWriter — context manager
 # ---------------------------------------------------------------------------
-import pandas as _pd
-testing = _pd.testing
+from .excel_writer import ExcelWriter
+
+# ---------------------------------------------------------------------------
+# Styler — DataFrame.style returns this
+# ---------------------------------------------------------------------------
+from .styling import Styler
+
+# ---------------------------------------------------------------------------
+# Window wrappers
+# ---------------------------------------------------------------------------
+from .window import Rolling, Expanding, ExponentialMovingWindow, EWM
+
+# ---------------------------------------------------------------------------
+# testing namespace — enhanced with pandasv2 extras
+# ---------------------------------------------------------------------------
+from .testing import testing
+
+# ---------------------------------------------------------------------------
+# api namespace — pd.api.types, pd.api.extensions
+# ---------------------------------------------------------------------------
+from .api_types import api
+
+# ---------------------------------------------------------------------------
+# arrays namespace — pd.arrays.*
+# ---------------------------------------------------------------------------
+from .arrays import arrays
+
+# ---------------------------------------------------------------------------
+# plotting namespace — pd.plotting.*
+# ---------------------------------------------------------------------------
+from .plotting import plotting
+
+# ---------------------------------------------------------------------------
+# offsets namespace — full pd.offsets.* (overrides the basic alias above)
+# ---------------------------------------------------------------------------
+from .offsets_ext import offsets  # noqa: F811 — intentional override
 
 # ---------------------------------------------------------------------------
 # __all__
@@ -233,7 +276,7 @@ __all__ = [
     # Options
     "set_option", "get_option", "reset_option", "describe_option",
     "option_context",
-    # Offsets
+    # Offsets namespace
     "offsets",
     # Web serialisation
     "JSONEncoder", "JSONDecoder", "to_json", "from_json",
@@ -246,6 +289,12 @@ __all__ = [
     "setup_json_encoder", "create_response_handler",
     # GroupBy
     "DataFrameGroupBy", "SeriesGroupBy",
-    # testing
-    "testing",
+    # ExcelWriter
+    "ExcelWriter",
+    # Styling
+    "Styler",
+    # Window
+    "Rolling", "Expanding", "ExponentialMovingWindow", "EWM",
+    # Namespaces
+    "testing", "api", "arrays", "plotting",
 ]

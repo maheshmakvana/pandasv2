@@ -247,6 +247,75 @@ class Series(_pd.Series):
     def combine(self, other, func, fill_value=None) -> 'Series':
         return Series(super().combine(other, func, fill_value=fill_value))
 
+    # ------------------------------------------------------------------
+    # Window (explicit wrappers that return pandasv2 types)
+    # ------------------------------------------------------------------
+
+    def rolling(self, window, min_periods=None, center=False, win_type=None,
+                on=None, closed=None, step=None, method='single'):
+        """
+        Provide rolling window calculations, returning pandasv2 Rolling.
+
+        Example:
+            >>> series.rolling(7).mean()
+        """
+        from .window import Rolling
+        kw = dict(min_periods=min_periods, center=center,
+                  win_type=win_type, on=on, closed=closed, method=method)
+        if step is not None:
+            kw['step'] = step
+        return Rolling(super().rolling(window, **kw))
+
+    def expanding(self, min_periods=1, method='single'):
+        """
+        Provide expanding window calculations, returning pandasv2 Expanding.
+
+        Example:
+            >>> series.expanding().mean()
+        """
+        from .window import Expanding
+        return Expanding(super().expanding(min_periods=min_periods, method=method))
+
+    def ewm(self, com=None, span=None, halflife=None, alpha=None,
+            min_periods=0, adjust=True, ignore_na=False, times=None,
+            method='single'):
+        """
+        Provide exponentially weighted calculations, returning pandasv2 EWM.
+
+        Example:
+            >>> series.ewm(span=12).mean()
+        """
+        from .window import ExponentialMovingWindow
+        kw = dict(min_periods=min_periods, adjust=adjust,
+                  ignore_na=ignore_na, method=method)
+        for k, v in [('com', com), ('span', span), ('halflife', halflife),
+                     ('alpha', alpha), ('times', times)]:
+            if v is not None:
+                kw[k] = v
+        return ExponentialMovingWindow(super().ewm(**kw))
+
+    # ------------------------------------------------------------------
+    # Plotting
+    # ------------------------------------------------------------------
+
+    @property
+    def plot(self):
+        """
+        Return a pandasv2 PlotAccessor for this Series.
+
+        All standard plot types work (line, bar, hist, kde/density, etc.).
+        Extra methods on the result:
+          .to_base64()  — base64 PNG for API responses
+          .to_html()    — inline <img> tag
+          .to_bytes()   — raw PNG bytes
+          .save(path)   — save to file
+
+        Example:
+            >>> series.plot.line().to_base64()
+        """
+        from .plotting import PlotAccessor
+        return PlotAccessor(self)
+
     def __repr__(self) -> str:
         base = super().__repr__()
         return f"[pandasv2.Series]\n{base}"
