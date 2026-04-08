@@ -20,7 +20,7 @@ def read_file(filename):
 
 setup(
     name='pandasv2',
-    version='2.0.0',
+    version='2.0.1',
     author='Mahesh Makvana',
     author_email='mahesh.makvana@example.com',
     description='pandas drop-in replacement: built-in JSON serialization, to_web(), FastAPI/Flask/Django integration, no more TypeError on int64',

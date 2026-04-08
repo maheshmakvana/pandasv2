@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pandasv2"
-version = "2.0.0"
-description = "Full pandas replacement with built-in JSON serialization and web framework integration"
+version = "2.0.1"
+description = "pandas drop-in replacement: built-in JSON serialization, to_web(), FastAPI/Flask/Django integration, no more TypeError on int64"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -14,15 +14,24 @@ authors = [
 ]
 keywords = [
     "pandas",
-    "json",
-    "serialization",
-    "fastapi",
-    "flask",
-    "django",
+    "pandasv2",
+    "pandas drop-in",
+    "pandas replacement",
+    "json serialization",
+    "pandas json",
+    "dataframe json",
+    "fastapi pandas",
+    "flask pandas",
+    "django pandas",
     "dataframe",
-    "web",
-    "api",
+    "web api",
     "data-science",
+    "int64 not json serializable",
+    "pandas web",
+    "numpy json",
+    "type conversion",
+    "rest api",
+    "data analytics",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

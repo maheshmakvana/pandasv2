@@ -33,7 +33,7 @@ Built by Mahesh Makvana
 https://github.com/maheshmakvana/pandasv2
 """
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 __author__ = "Mahesh Makvana"
 __license__ = "MIT"
 
