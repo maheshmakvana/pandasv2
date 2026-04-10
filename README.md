@@ -12,8 +12,6 @@
 import pandasv2 as pd          # drop-in replacement for pandas
 ```
 
-Built by **Mahesh Makvana** · [GitHub](https://github.com/maheshmakvana/pandasv2)
-
 ---
 
 ## Why pandasv2?
@@ -700,10 +698,21 @@ pytest tests/
 
 ## License
 
-MIT License — Copyright (c) 2024 Mahesh Makvana
+MIT License — see [LICENSE](LICENSE) for full text.
 
-See [LICENSE](LICENSE) for full text.
+## Changelog
 
----
+### v2.2.0 (2026-04-10)
+- Added Changelog section to README for release traceability
+- Removed personal attribution for clean open-source presentation
+- Added DataFrameCache, DataFrameDiff, DataFramePipeline, DataFrameValidator, StreamingExporter, profile_dataframe
+- SEO improvements: pandas json serialization, pandas fastapi, pandas web integration
 
-Built with care by **Mahesh Makvana** · [@maheshmakvana](https://github.com/maheshmakvana)
+### v2.1.0
+- Patched 6 high-impact pandas 2.x compatibility bugs
+
+### v2.0.1
+- SEO improvements and version bump
+
+### v2.0.0
+- Initial release: full pandas replacement with built-in JSON serialization, FastAPI/Flask/Django integration
