@@ -685,34 +685,18 @@ pandasv2 is **3-5x faster** than manual conversion because it avoids redundant o
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome! Here's how to get started:
 
-```bash
-git clone https://github.com/maheshmakvana/pandasv2
-cd pandasv2
-pip install -e ".[dev]"
-pytest tests/
-```
+1. Fork the repository on [GitHub](https://github.com/maheshmakvana/pandasv2)
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes and add tests
+4. Run the test suite: `pytest tests/ -v`
+5. Submit a pull request
 
----
+Please open an issue first for major changes to discuss the approach.
 
-## License
+## Author
 
-MIT License — see [LICENSE](LICENSE) for full text.
+**Mahesh Makvana** — [GitHub](https://github.com/maheshmakvana) · [PyPI](https://pypi.org/user/maheshmakvana/)
 
-## Changelog
-
-### v2.2.0 (2026-04-10)
-- Added Changelog section to README for release traceability
-- Removed personal attribution for clean open-source presentation
-- Added DataFrameCache, DataFrameDiff, DataFramePipeline, DataFrameValidator, StreamingExporter, profile_dataframe
-- SEO improvements: pandas json serialization, pandas fastapi, pandas web integration
-
-### v2.1.0
-- Patched 6 high-impact pandas 2.x compatibility bugs
-
-### v2.0.1
-- SEO improvements and version bump
-
-### v2.0.0
-- Initial release: full pandas replacement with built-in JSON serialization, FastAPI/Flask/Django integration
+MIT License
