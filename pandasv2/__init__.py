@@ -33,7 +33,7 @@ Built by Mahesh Makvana
 https://github.com/maheshmakvana/pandasv2
 """
 
-__version__ = "2.0.1"
+__version__ = "2.2.0"
 __author__ = "Mahesh Makvana"
 __license__ = "MIT"
 
@@ -160,6 +160,21 @@ from .analytics import (
     option_context,
     # Offsets (basic alias — full namespace below)
     offsets,
+)
+
+# ---------------------------------------------------------------------------
+# Advanced features (2.1.0)
+# ---------------------------------------------------------------------------
+from .advanced import (
+    DataFrameCache,
+    DataFrameDiff,
+    DataFramePipeline,
+    DataFrameValidator,
+    ColumnRule,
+    ColumnValidationError,
+    StreamingExporter,
+    profile_dataframe,
+    DataFrameWatcher,
 )
 
 # ---------------------------------------------------------------------------

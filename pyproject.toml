@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pandasv2"
-version = "2.1.0"
-description = "pandas drop-in replacement: built-in JSON serialization, to_web(), FastAPI/Flask/Django integration, no more TypeError on int64"
+version = "2.2.0"
+description = "pandas drop-in replacement: JSON serialization, DataFrame pipeline, diff tracking, column validation, streaming export, caching, FastAPI/Flask/Django integration"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -28,10 +28,22 @@ keywords = [
     "data-science",
     "int64 not json serializable",
     "pandas web",
+    "series json",
     "numpy json",
     "type conversion",
     "rest api",
     "data analytics",
+    "dataframe pipeline",
+    "dataframe diff",
+    "dataframe cache",
+    "dataframe validation",
+    "streaming dataframe",
+    "dataframe profiling",
+    "pandas pipeline",
+    "pandas validation",
+    "data quality",
+    "dataframe change detection",
+    "object of type int64 is not json serializable",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
