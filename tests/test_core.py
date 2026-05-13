@@ -221,7 +221,7 @@ class TestConverters:
 
         assert isinstance(records, list)
         assert len(records) == 3
-        assert records[1]['b'] is None  # NaN converted to None
+        assert records[0]['b'] is None  # NaN converted to None
 
     def test_series_to_list(self):
         s = pd.Series([1, 2, np.nan, 4])

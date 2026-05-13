@@ -39,14 +39,14 @@ class Series(_pd.Series):
 
     def to_json_safe(self, **kwargs) -> str:
         """Serialize Series to JSON, handling all pandas/NumPy types."""
-        from .core import to_json
-        return to_json(self, **kwargs)
+        from .converters import series_to_json_safe_str
+        return series_to_json_safe_str(self, **kwargs)
 
     @classmethod
     def from_json_safe(cls, json_str: str) -> 'Series':
         """Reconstruct Series from pandasv2 JSON string."""
-        from .core import from_json
-        result = from_json(json_str)
+        from .converters import series_from_json_safe_str
+        result = series_from_json_safe_str(json_str)
         return cls(result)
 
     def to_web(self) -> List:

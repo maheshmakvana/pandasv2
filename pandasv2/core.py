@@ -45,7 +45,7 @@ class JSONEncoder(json.JSONEncoder):
                 if math.isnan(obj):
                     return None
                 if math.isinf(obj):
-                    return float('inf') if obj > 0 else float('-inf')
+                    return None
             return obj.item()
 
         # NumPy array
@@ -75,7 +75,10 @@ class JSONEncoder(json.JSONEncoder):
         if isinstance(obj, pd.DataFrame):
             return {
                 '__type__': 'DataFrame',
-                'data': obj.to_dict(orient='records'),
+                'data': [
+                    {k: _to_json_safe_basic(v) for k, v in row.items()}
+                    for _, row in obj.iterrows()
+                ],
                 'columns': obj.columns.tolist(),
                 'index': obj.index.tolist() if not isinstance(obj.index, pd.RangeIndex) else None,
                 'dtypes': {col: str(dtype) for col, dtype in obj.dtypes.items()},
@@ -85,7 +88,7 @@ class JSONEncoder(json.JSONEncoder):
         if isinstance(obj, pd.Series):
             return {
                 '__type__': 'Series',
-                'data': obj.tolist(),
+                'data': [_to_json_safe_basic(v) for v in obj.tolist()],
                 'index': obj.index.tolist() if not isinstance(obj.index, pd.RangeIndex) else None,
                 'dtype': str(obj.dtype),
                 'name': obj.name,
@@ -107,6 +110,66 @@ class JSONEncoder(json.JSONEncoder):
 
         # Fall back to parent class
         return super().default(obj)
+
+    def encode(self, o: Any) -> str:
+        """
+        Encode with strict JSON-safe handling of NaN/Infinity.
+
+        Python's stdlib json will emit NaN/Infinity tokens by default for non-finite
+        floats, which many JSON parsers reject. We normalize them to null.
+        """
+        return super().encode(_json_sanitize_non_finite(o))
+
+
+def _json_sanitize_non_finite(obj: Any) -> Any:
+    """Recursively replace NaN/Infinity floats with None for strict JSON."""
+    if isinstance(obj, dict):
+        return {k: _json_sanitize_non_finite(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_json_sanitize_non_finite(v) for v in obj]
+    if isinstance(obj, tuple):
+        return [_json_sanitize_non_finite(v) for v in obj]
+    if isinstance(obj, (float, np.floating)):
+        v = float(obj)
+        if math.isnan(v) or math.isinf(v):
+            return None
+        return v
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, (np.bool_,)):
+        return bool(obj)
+    return obj
+
+
+def _to_json_safe_basic(val: Any) -> Any:
+    """Best-effort scalar conversion for JSONEncoder payloads (strict JSON)."""
+    if val is None:
+        return None
+    if isinstance(val, (float, np.floating)):
+        v = float(val)
+        if math.isnan(v) or math.isinf(v):
+            return None
+        return v
+    if isinstance(val, np.integer):
+        return int(val)
+    if isinstance(val, (np.bool_,)):
+        return bool(val)
+    try:
+        if pd.isna(val):
+            return None
+    except (TypeError, ValueError):
+        pass
+    if isinstance(val, pd.Timestamp):
+        return val.isoformat()
+    if isinstance(val, pd.Timedelta):
+        return val.total_seconds()
+    if isinstance(val, (datetime, date, time)):
+        return val.isoformat()
+    if isinstance(val, timedelta):
+        return val.total_seconds()
+    if isinstance(val, (str, int, bool)):
+        return val
+    return str(val)
 
 
 class JSONDecoder(json.JSONDecoder):
