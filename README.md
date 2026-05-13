@@ -149,7 +149,7 @@ df.to_clipboard(), df.to_pickle('out.pkl')
 df.to_string()
 
 # pandasv2 extras
-df.to_json_safe()               # lossless JSON (handles int64, Timestamp, NaT, ...)
+df.to_json_safe()               # strict JSON for web APIs (NumPy scalars, Timestamp/Timedelta, NaN/NaT/NA, +/-inf)
 df.to_web(orient='records')     # plain dict/list for HTTP responses
 pd.DataFrame.from_json_safe(s)  # round-trip reconstruction
 ```

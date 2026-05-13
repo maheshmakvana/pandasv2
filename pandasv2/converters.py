@@ -12,10 +12,15 @@ Built by Mahesh Makvana
 """
 
 import json
+import math
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
-import math
-from typing import Any, Dict, List, Union, Optional, Tuple
+
+
+_PANDASV2_TAG_KEY = "__pandasv2__"
+_PANDASV2_FLOAT_TAG = "float"
 
 
 def pandas_to_json(
@@ -90,15 +95,16 @@ def _dataframe_to_json_safe(df: pd.DataFrame, orient: str = 'records') -> Union[
     elif orient == 'split':
         return {
             'columns': df.columns.tolist(),
-            'index': df.index.tolist(),
-            'data': [row.tolist() for _, row in df.iterrows()],
+            'index': [_to_json_safe(v) for v in df.index.tolist()],
+            'data': [[_to_json_safe(v) for v in row.tolist()] for _, row in df.iterrows()],
         }
     elif orient == 'index':
-        return {idx: _row_to_json_safe(row) for idx, row in df.iterrows()}
+        # JSON object keys must be strings; use a stable string form for the index key.
+        return {str(_to_json_safe(idx)): _row_to_json_safe(row) for idx, row in df.iterrows()}
     elif orient == 'columns':
         return {col: _series_to_json_safe(df[col]) for col in df.columns}
     elif orient == 'values':
-        return df.values.tolist()
+        return [[_to_json_safe(v) for v in row] for row in df.values.tolist()]
     else:
         raise ValueError(f"Invalid orient: {orient}")
 
@@ -119,18 +125,28 @@ def _to_json_safe(val: Any) -> Any:
     if val is None:
         return None
 
-    # NumPy/pandas missing values
-    if pd.isna(val):
-        return None
+    # Non-finite floats must not be emitted as NaN/Infinity (invalid JSON).
+    # Encode them as tagged objects for stable round-trip.
+    if isinstance(val, (float, np.floating)):
+        float_val = float(val)
+        if math.isnan(float_val):
+            return None
+        if math.isinf(float_val):
+            return {_PANDASV2_TAG_KEY: _PANDASV2_FLOAT_TAG, "value": "inf" if float_val > 0 else "-inf"}
+        return float_val
 
     # NumPy scalars
-    if isinstance(val, (np.integer, np.floating)):
-        if isinstance(val, np.floating):
-            if math.isnan(val):
-                return None
-            if math.isinf(val):
-                return None
-        return val.item()
+    if isinstance(val, np.integer):
+        return int(val)
+    if isinstance(val, (np.bool_,)):
+        return bool(val)
+
+    # NumPy/pandas missing values (after float handling so NaN can be losslessly tagged)
+    try:
+        if pd.isna(val):
+            return None
+    except (TypeError, ValueError):
+        pass
 
     # pandas types
     if isinstance(val, pd.Timestamp):
@@ -148,6 +164,180 @@ def _to_json_safe(val: Any) -> Any:
 
     # Default: convert to string
     return str(val)
+
+
+def _from_json_safe(val: Any) -> Any:
+    """
+    Decode a value produced by _to_json_safe.
+
+    This is intentionally minimal: it restores tagged non-finite floats.
+    Datetime/Timedelta restoration is handled at the column-level using dtype metadata.
+    """
+    if isinstance(val, dict) and val.get(_PANDASV2_TAG_KEY) == _PANDASV2_FLOAT_TAG:
+        tag_value = val.get("value")
+        if tag_value == "nan":
+            return float("nan")
+        if tag_value == "inf":
+            return float("inf")
+        if tag_value == "-inf":
+            return float("-inf")
+        return float("nan")
+    return val
+
+
+def _walk_decode_json_safe(obj: Any) -> Any:
+    """Recursively decode tagged values in JSON-safe structures."""
+    if isinstance(obj, list):
+        return [_walk_decode_json_safe(v) for v in obj]
+    if isinstance(obj, dict):
+        decoded = _from_json_safe(obj)
+        if decoded is not obj:
+            return decoded
+        return {k: _walk_decode_json_safe(v) for k, v in obj.items()}
+    return obj
+
+
+def dataframe_to_json_safe_str(
+    df: pd.DataFrame,
+    orient: str = "records",
+    **json_kwargs: Any,
+) -> str:
+    """
+    Serialize a DataFrame to strict JSON safe for web APIs.
+
+    The payload includes dtype metadata for stable round-trip via
+    :func:`dataframe_from_json_safe_str`.
+    """
+    payload = {
+        "__type__": "DataFrame",
+        "orient": orient,
+        "data": _dataframe_to_json_safe(df, orient=orient),
+        "columns": df.columns.tolist(),
+        "index": [_to_json_safe(v) for v in df.index.tolist()] if not isinstance(df.index, pd.RangeIndex) else None,
+        "index_dtype": str(df.index.dtype) if not isinstance(df.index, pd.RangeIndex) else None,
+        "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
+    }
+    return json.dumps(payload, allow_nan=False, **json_kwargs)
+
+
+def series_to_json_safe_str(
+    series: pd.Series,
+    **json_kwargs: Any,
+) -> str:
+    """Serialize a Series to strict JSON safe for web APIs (with dtype metadata)."""
+    payload = {
+        "__type__": "Series",
+        "data": _series_to_json_safe(series),
+        "index": [_to_json_safe(v) for v in series.index.tolist()] if not isinstance(series.index, pd.RangeIndex) else None,
+        "index_dtype": str(series.index.dtype) if not isinstance(series.index, pd.RangeIndex) else None,
+        "dtype": str(series.dtype),
+        "name": series.name,
+    }
+    return json.dumps(payload, allow_nan=False, **json_kwargs)
+
+
+def dataframe_from_json_safe_str(json_str: str) -> pd.DataFrame:
+    """Reconstruct a DataFrame from `dataframe_to_json_safe_str` output."""
+    payload = json.loads(json_str)
+    if isinstance(payload, dict) and payload.get("__type__") == "DataFrame":
+        orient = payload.get("orient", "records")
+        dtypes = payload.get("dtypes", {}) or {}
+        index = _walk_decode_json_safe(payload.get("index"))
+        index_dtype = payload.get("index_dtype")
+
+        data = _walk_decode_json_safe(payload.get("data", []))
+        columns = payload.get("columns", [])
+
+        if orient == "records":
+            df = pd.DataFrame(data, columns=columns)
+        elif orient == "split":
+            # split payload is already a dict with columns/index/data
+            if isinstance(data, dict):
+                split_cols = data.get("columns", columns)
+                split_index = _walk_decode_json_safe(data.get("index", index))
+                split_data = _walk_decode_json_safe(data.get("data", []))
+                df = pd.DataFrame(split_data, columns=split_cols)
+                if split_index is not None:
+                    df.index = split_index
+            else:
+                df = pd.DataFrame(data, columns=columns)
+        else:
+            # Keep reconstruction predictable: only records/split are guaranteed round-trippable.
+            df = pd.DataFrame(data, columns=columns)
+
+        if index is not None:
+            df.index = _restore_index_like(index, index_dtype)
+
+        _restore_dataframe_dtypes(df, dtypes)
+        return df
+
+    # Back-compat: allow old pandasv2 JSONEncoder payloads
+    if isinstance(payload, dict) and payload.get("__type__") == "DataFrame":
+        df = pd.DataFrame(payload.get("data", []), columns=payload.get("columns", []))
+        if payload.get("index") is not None:
+            df.index = payload["index"]
+        _restore_dataframe_dtypes(df, payload.get("dtypes", {}) or {})
+        return df
+
+    raise ValueError("JSON does not represent a pandasv2 DataFrame payload")
+
+
+def series_from_json_safe_str(json_str: str) -> pd.Series:
+    """Reconstruct a Series from `series_to_json_safe_str` output."""
+    payload = json.loads(json_str)
+    if not (isinstance(payload, dict) and payload.get("__type__") == "Series"):
+        raise ValueError("JSON does not represent a pandasv2 Series payload")
+
+    data = _walk_decode_json_safe(payload.get("data", []))
+    index = _walk_decode_json_safe(payload.get("index"))
+    index_dtype = payload.get("index_dtype")
+    dtype = payload.get("dtype", "object")
+    name = payload.get("name")
+
+    index_restored = _restore_index_like(index, index_dtype) if index is not None else None
+    series = pd.Series(data, index=index_restored, name=name)
+    series = _restore_series_dtype(series, dtype)
+    return series
+
+
+def _restore_series_dtype(series: pd.Series, dtype_str: str) -> pd.Series:
+    """Restore Series dtype using dtype metadata (minimal safe behavior)."""
+    if "datetime64" in dtype_str:
+        return pd.to_datetime(series, errors="coerce")
+    if "timedelta64" in dtype_str:
+        return pd.to_timedelta(series, unit="s")
+    try:
+        return series.astype(dtype_str)
+    except (TypeError, ValueError):
+        return series
+
+
+def _restore_dataframe_dtypes(df: pd.DataFrame, dtypes: Dict[str, str]) -> None:
+    """Restore DataFrame dtypes in-place (minimal safe behavior)."""
+    for col, dtype_str in dtypes.items():
+        if col not in df.columns:
+            continue
+        if "datetime64" in dtype_str:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+            continue
+        if "timedelta64" in dtype_str:
+            df[col] = pd.to_timedelta(df[col], unit="s")
+            continue
+        try:
+            df[col] = df[col].astype(dtype_str)
+        except (TypeError, ValueError):
+            continue
+
+
+def _restore_index_like(values: Any, dtype_str: Optional[str]) -> Any:
+    """Restore index-like values based on dtype metadata (best-effort)."""
+    if dtype_str is None:
+        return values
+    if "datetime64" in dtype_str:
+        return pd.to_datetime(values, errors="coerce")
+    if "timedelta64" in dtype_str:
+        return pd.to_timedelta(values, unit="s")
+    return values
 
 
 def json_to_pandas(
@@ -294,14 +484,14 @@ def infer_dtype(
     try:
         # Try numeric
         numeric_data = pd.to_numeric(sample, errors='coerce')
-        if numeric_data.isna().sum() == 0:
+        if int(np.sum(pd.isna(numeric_data))) == 0:
             if all(isinstance(v, (int, np.integer)) or float(v).is_integer() for v in sample):
                 return 'int64'
             return 'float64'
 
         # Try datetime
         datetime_data = pd.to_datetime(sample, errors='coerce')
-        if datetime_data.isna().sum() == 0:
+        if int(np.sum(pd.isna(datetime_data))) == 0:
             return 'datetime64[ns]'
 
         # Default to object
@@ -380,7 +570,7 @@ def batch_convert(
     results = []
     for item in data:
         if operation == 'to_json':
-            results.append(pandas_to_json(item, **kwargs))
+            results.append(json.dumps(pandas_to_json(item, **kwargs), allow_nan=False))
         elif operation == 'to_dict':
             from .core import serialize
             results.append(serialize(item, **kwargs))

@@ -57,8 +57,8 @@ class DataFrame(_pd.DataFrame):
         Example:
             >>> df.to_json_safe(orient='records')
         """
-        from .core import to_json
-        return to_json(self, **kwargs)
+        from .converters import dataframe_to_json_safe_str
+        return dataframe_to_json_safe_str(self, orient=orient, **kwargs)
 
     @classmethod
     def from_json_safe(cls, json_str: str) -> 'DataFrame':
@@ -68,8 +68,8 @@ class DataFrame(_pd.DataFrame):
         Example:
             >>> df = DataFrame.from_json_safe(json_str)
         """
-        from .core import from_json
-        result = from_json(json_str)
+        from .converters import dataframe_from_json_safe_str
+        result = dataframe_from_json_safe_str(json_str)
         return cls(result)
 
     def to_web(self, orient: str = 'records', include_dtypes: bool = False) -> Dict:
