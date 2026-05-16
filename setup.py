@@ -20,7 +20,7 @@ def read_file(filename):
 
 setup(
     name='pandasv2',
-    version='2.2.0',
+    version='2.2.3',
     author='Mahesh Makvana',
     author_email='mahesh.makvana@example.com',
     description='pandas drop-in replacement: JSON serialization, DataFrame pipeline, diff tracking, column validation, streaming export, caching, FastAPI/Flask/Django integration',
