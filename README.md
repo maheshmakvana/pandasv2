@@ -1,3 +1,5 @@
+![pandasv2 Banner](assets/images/banner.svg)
+
 # pandasv2
 
 [![PyPI](https://img.shields.io/pypi/v/pandasv2.svg)](https://pypi.org/project/pandasv2/)
