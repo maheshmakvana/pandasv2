@@ -309,11 +309,28 @@ def read_sql(
     """
     Read SQL query or database table into a pandasv2 DataFrame.
 
+    .. warning::
+
+        **SQL injection risk.** When ``sql`` is a raw SQL string and
+        ``params`` is None, the query is sent as-is to the database.
+        Always use parameterised queries (pass a ``params`` argument) when
+        the query contains user-supplied values.
+
     Example:
         >>> import sqlite3
         >>> con = sqlite3.connect('data.db')
-        >>> df = pd.read_sql('SELECT * FROM users', con)
+        >>> df = pd.read_sql('SELECT * FROM users WHERE id = ?', con, params=(1,))
     """
+    if params is None and isinstance(sql, str):
+        import warnings as _w
+        _w.warn(
+            "read_sql received a raw SQL string without ``params``. "
+            "If this string contains unsanitised user input the query is "
+            "vulnerable to SQL injection. Use parameterised queries with "
+            "the ``params`` argument for safe execution.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
     kw = dict(index_col=index_col, coerce_float=coerce_float, params=params,
               parse_dates=parse_dates, columns=columns, chunksize=chunksize)
     for param, val in [
@@ -412,7 +429,20 @@ def read_xml(
     iterparse=None, compression='infer', storage_options=None,
     dtype_backend=_pd.api.extensions.no_default,
 ):
-    """Read XML document into a pandasv2 DataFrame."""
+    """Read XML document into a pandasv2 DataFrame.
+
+    .. note::
+
+        This function delegates to ``pandas.read_xml`` which, when using
+        the default ``parser='lxml'``, uses a safe XML parser that is not
+        vulnerable to XXE (XML External Entity) attacks. The ``lxml``
+        library disables entity resolution by default.
+
+        If you must use ``parser='etree'``, be aware that the standard
+        library ``xml.etree.ElementTree`` **may** be vulnerable to XXE
+        depending on your Python version. Prefer ``parser='lxml'`` for
+        any untrusted XML input.
+    """
     kw = dict(
         xpath=xpath, namespaces=namespaces, elems_only=elems_only,
         attrs_only=attrs_only, names=names, dtype=dtype, converters=converters,
@@ -436,8 +466,48 @@ def read_hdf(path_or_buf, key=None, mode='r', errors='strict',
     return _wrap(result)
 
 
-def read_pickle(filepath_or_buffer, compression='infer', storage_options=None):
-    """Load pickled pandas object (or any object) from file."""
+def read_pickle(
+    filepath_or_buffer,
+    compression='infer',
+    storage_options=None,
+    allow_pickle=False,
+):
+    """
+    Load pickled pandas object (or any object) from file.
+
+    .. warning::
+
+        **Security risk.** Pickle files can execute arbitrary code during
+        deserialisation. Only unpickle data you trust.
+
+        By default (``allow_pickle=False``) a warning is emitted. Set
+        ``allow_pickle=True`` to suppress it. Consider using Parquet
+        (``read_parquet``) or JSON (``read_json``) instead — they are safer
+        and widely supported.
+
+    Parameters
+    ----------
+    filepath_or_buffer : str, path object, or file-like object
+    compression : str, optional
+    storage_options : dict, optional
+    allow_pickle : bool, default False
+        If False, emit a security warning recommending safer alternatives.
+
+    Returns
+    -------
+    pandasv2 DataFrame or Series
+    """
+    if not allow_pickle:
+        import warnings as _w
+        _w.warn(
+            "read_pickle uses the ``pickle`` module which is **insecure** and "
+            "can execute arbitrary code during deserialisation. "
+            "Only unpickle data from trusted sources. "
+            "Consider using ``read_parquet`` or ``read_json`` instead. "
+            "Pass ``allow_pickle=True`` to suppress this warning.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
     return _wrap(_pd.read_pickle(filepath_or_buffer, compression=compression,
                                   storage_options=storage_options))
 

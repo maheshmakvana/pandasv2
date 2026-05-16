@@ -45,6 +45,14 @@ class JSONEncoder(json.JSONEncoder):
                 if math.isnan(obj):
                     return None
                 if math.isinf(obj):
+                    import warnings as _w
+                    _w.warn(
+                        "Infinity value found during JSON serialisation. "
+                        "JSON does not support Infinity; the value will be "
+                        "emitted as ``null`` and information will be lost.",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
                     return None
             return obj.item()
 
@@ -121,17 +129,39 @@ class JSONEncoder(json.JSONEncoder):
         return super().encode(_json_sanitize_non_finite(o))
 
 
-def _json_sanitize_non_finite(obj: Any) -> Any:
-    """Recursively replace NaN/Infinity floats with None for strict JSON."""
+def _json_sanitize_non_finite(obj: Any, _warned_inf: set = None) -> Any:
+    """Recursively replace NaN/Infinity floats for strict JSON.
+
+    NaN is replaced with ``None`` (the standard JSON representation).
+    Positive/negative Infinity is also replaced with ``None``, and a
+    one-time warning is emitted since Infinity carries semantic meaning
+    that can be lost during serialisation.
+    """
+    if _warned_inf is None:
+        _warned_inf = set()
     if isinstance(obj, dict):
-        return {k: _json_sanitize_non_finite(v) for k, v in obj.items()}
+        return {k: _json_sanitize_non_finite(v, _warned_inf) for k, v in obj.items()}
     if isinstance(obj, list):
-        return [_json_sanitize_non_finite(v) for v in obj]
+        return [_json_sanitize_non_finite(v, _warned_inf) for v in obj]
     if isinstance(obj, tuple):
-        return [_json_sanitize_non_finite(v) for v in obj]
+        return [_json_sanitize_non_finite(v, _warned_inf) for v in obj]
     if isinstance(obj, (float, np.floating)):
         v = float(obj)
-        if math.isnan(v) or math.isinf(v):
+        if math.isnan(v):
+            return None
+        if math.isinf(v):
+            if "inf" not in _warned_inf:
+                _warned_inf.add("inf")
+                import warnings as _w
+                _w.warn(
+                    "Infinity value found during JSON serialisation. "
+                    "JSON does not support Infinity; the value will be "
+                    "emitted as ``null`` and information will be lost. "
+                    "Use ``pd.to_json_safe()`` or the pandasv2 converter "
+                    "module for round-trip-safe Infinity handling.",
+                    RuntimeWarning,
+                    stacklevel=3,
+                )
             return None
         return v
     if isinstance(obj, np.integer):

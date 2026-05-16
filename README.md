@@ -697,6 +697,26 @@ Contributions are welcome! Here's how to get started:
 
 Please open an issue first for major changes to discuss the approach.
 
+## Changelog
+
+### v2.4.2 (2026-05-17) — Security release
+
+- **CWE-502 (HIGH):** `read_pickle` now requires explicit `allow_pickle=True` and emits a
+  security warning by default. Use Parquet/JSON for safe serialisation.
+- **CWE-703 (HIGH):** All bare `assert` statements in `testing.py` replaced with explicit
+  `if not ...: raise AssertionError(...)` so they cannot be compiled away with ``-O``.
+- **CWE-89 (MEDIUM):** `read_sql` warns when called with a raw SQL string and no ``params``
+  argument (potential SQL injection).
+- **CWE-1333 (MEDIUM):** `DataFrameValidator` regex validation has a 2-second timeout guard
+  to prevent ReDoS attacks from hanging the process.
+- **CWE-327 (MEDIUM):** `_df_hash` upgraded from MD5 to SHA-256 for content hashing.
+- **CWE-117 (MEDIUM):** `JSONEncoder` now warns when Infinity values are silently demoted
+  to ``null`` during serialisation.
+- **Error swallowing (MEDIUM):** ``json_middleware`` in integrations.py now properly
+  distinguishes expected JSON decode errors from unexpected exceptions.
+- **XXE documentation (LOW):** ``read_xml`` docstring documents that ``lxml`` parser is
+  safe against XXE attacks by default.
+
 ## Author
 
 **Mahesh Makvana** — [GitHub](https://github.com/maheshmakvana) · [PyPI](https://pypi.org/user/maheshmakvana/)

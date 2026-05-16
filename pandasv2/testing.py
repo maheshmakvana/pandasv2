@@ -73,11 +73,14 @@ def assert_dict_equal(left: Dict, right: Dict, check_like: bool = False) -> None
     Example:
         >>> assert_dict_equal({'a': 1}, {'a': 1})
     """
-    assert isinstance(left, dict), f"left is not a dict: {type(left)}"
-    assert isinstance(right, dict), f"right is not a dict: {type(right)}"
-    assert set(left.keys()) == set(right.keys()), (
-        f"Dict keys differ.\nleft:  {sorted(left.keys())}\nright: {sorted(right.keys())}"
-    )
+    if not isinstance(left, dict):
+        raise AssertionError(f"left is not a dict: {type(left)}")
+    if not isinstance(right, dict):
+        raise AssertionError(f"right is not a dict: {type(right)}")
+    if set(left.keys()) != set(right.keys()):
+        raise AssertionError(
+            f"Dict keys differ.\nleft:  {sorted(left.keys())}\nright: {sorted(right.keys())}"
+        )
     for k in left:
         lv, rv = left[k], right[k]
         if isinstance(lv, _pd.DataFrame) and isinstance(rv, _pd.DataFrame):
@@ -87,7 +90,8 @@ def assert_dict_equal(left: Dict, right: Dict, check_like: bool = False) -> None
         elif isinstance(lv, _np.ndarray) and isinstance(rv, _np.ndarray):
             _np.testing.assert_array_equal(lv, rv)
         else:
-            assert lv == rv, f"Dict value mismatch for key {k!r}: {lv!r} != {rv!r}"
+            if lv != rv:
+                raise AssertionError(f"Dict value mismatch for key {k!r}: {lv!r} != {rv!r}")
 
 
 def assert_frame_schema_equal(
@@ -112,24 +116,28 @@ def assert_frame_schema_equal(
     right_cols = list(right.columns)
 
     if check_column_order:
-        assert left_cols == right_cols, (
-            f"Column order differs.\nleft:  {left_cols}\nright: {right_cols}"
-        )
+        if left_cols != right_cols:
+            raise AssertionError(
+                f"Column order differs.\nleft:  {left_cols}\nright: {right_cols}"
+            )
     else:
-        assert set(left_cols) == set(right_cols), (
-            f"Column sets differ.\nleft:  {sorted(left_cols)}\nright: {sorted(right_cols)}"
-        )
+        if set(left_cols) != set(right_cols):
+            raise AssertionError(
+                f"Column sets differ.\nleft:  {sorted(left_cols)}\nright: {sorted(right_cols)}"
+            )
 
     if check_dtype:
         for col in left_cols:
             ld, rd = left[col].dtype, right[col].dtype
-            assert ld == rd, (
-                f"Dtype mismatch for column {col!r}: {ld} != {rd}"
-            )
+            if ld != rd:
+                raise AssertionError(
+                    f"Dtype mismatch for column {col!r}: {ld} != {rd}"
+                )
 
-    assert left.shape[1] == right.shape[1], (
-        f"Column count differs: {left.shape[1]} != {right.shape[1]}"
-    )
+    if left.shape[1] != right.shape[1]:
+        raise AssertionError(
+            f"Column count differs: {left.shape[1]} != {right.shape[1]}"
+        )
 
 
 def assert_frame_values_close(
@@ -192,12 +200,14 @@ def assert_frame_not_empty(df: _pd.DataFrame, msg: str = '') -> None:
     Example:
         >>> assert_frame_not_empty(df, 'Query returned no rows')
     """
-    assert len(df) > 0, msg or f"DataFrame is empty (0 rows)"
+    if not len(df) > 0:
+        raise AssertionError(msg or "DataFrame is empty (0 rows)")
 
 
 def assert_series_not_empty(s: _pd.Series, msg: str = '') -> None:
     """Assert Series has at least one element."""
-    assert len(s) > 0, msg or "Series is empty (0 elements)"
+    if not len(s) > 0:
+        raise AssertionError(msg or "Series is empty (0 elements)")
 
 
 def assert_no_nulls(obj: Union[_pd.DataFrame, _pd.Series], subset=None) -> None:
@@ -215,12 +225,14 @@ def assert_no_nulls(obj: Union[_pd.DataFrame, _pd.Series], subset=None) -> None:
         check = obj[subset] if subset is not None else obj
         nulls = check.isnull().sum()
         cols_with_nulls = nulls[nulls > 0]
-        assert cols_with_nulls.empty, (
-            f"DataFrame contains nulls:\n{cols_with_nulls.to_string()}"
-        )
+        if not cols_with_nulls.empty:
+            raise AssertionError(
+                f"DataFrame contains nulls:\n{cols_with_nulls.to_string()}"
+            )
     elif isinstance(obj, _pd.Series):
         n = obj.isnull().sum()
-        assert n == 0, f"Series '{obj.name}' contains {n} null value(s)"
+        if n != 0:
+            raise AssertionError(f"Series '{obj.name}' contains {n} null value(s)")
     else:
         raise TypeError(f"Expected DataFrame or Series, got {type(obj)}")
 
@@ -233,7 +245,8 @@ def assert_unique_index(df: _pd.DataFrame, msg: str = '') -> None:
         >>> assert_unique_index(df)
     """
     dupes = df.index.duplicated().sum()
-    assert dupes == 0, msg or f"DataFrame index has {dupes} duplicate(s)"
+    if dupes != 0:
+        raise AssertionError(msg or f"DataFrame index has {dupes} duplicate(s)")
 
 
 def assert_columns_exist(df: _pd.DataFrame, columns: Sequence[str]) -> None:
@@ -244,7 +257,8 @@ def assert_columns_exist(df: _pd.DataFrame, columns: Sequence[str]) -> None:
         >>> assert_columns_exist(df, ['user_id', 'timestamp', 'value'])
     """
     missing = [c for c in columns if c not in df.columns]
-    assert not missing, f"Missing columns: {missing}"
+    if missing:
+        raise AssertionError(f"Missing columns: {missing}")
 
 
 def assert_dtypes(df: _pd.DataFrame, expected: Dict[str, Any]) -> None:
@@ -260,12 +274,14 @@ def assert_dtypes(df: _pd.DataFrame, expected: Dict[str, Any]) -> None:
         >>> assert_dtypes(df, {'price': 'float64', 'qty': 'int64', 'name': 'object'})
     """
     for col, expected_dtype in expected.items():
-        assert col in df.columns, f"Column {col!r} not found in DataFrame"
+        if col not in df.columns:
+            raise AssertionError(f"Column {col!r} not found in DataFrame")
         actual = df[col].dtype
         expected_dtype = _np.dtype(expected_dtype) if isinstance(expected_dtype, str) else expected_dtype
-        assert actual == expected_dtype, (
-            f"Column {col!r} dtype mismatch: got {actual}, expected {expected_dtype}"
-        )
+        if actual != expected_dtype:
+            raise AssertionError(
+                f"Column {col!r} dtype mismatch: got {actual}, expected {expected_dtype}"
+            )
 
 
 def assert_row_count(df: _pd.DataFrame, expected_count: int,
@@ -276,9 +292,10 @@ def assert_row_count(df: _pd.DataFrame, expected_count: int,
     Example:
         >>> assert_row_count(df, 100)
     """
-    assert len(df) == expected_count, (
-        msg or f"Row count mismatch: got {len(df)}, expected {expected_count}"
-    )
+    if len(df) != expected_count:
+        raise AssertionError(
+            msg or f"Row count mismatch: got {len(df)}, expected {expected_count}"
+        )
 
 
 def assert_sorted(obj: Union[_pd.DataFrame, _pd.Series], by=None,
@@ -296,7 +313,8 @@ def assert_sorted(obj: Union[_pd.DataFrame, _pd.Series], by=None,
         >>> assert_sorted(series)
     """
     if isinstance(obj, _pd.DataFrame):
-        assert by is not None, "Must provide 'by' column(s) for DataFrame"
+        if by is None:
+            raise AssertionError("Must provide 'by' column(s) for DataFrame")
         check_col = obj[by] if isinstance(by, str) else obj[by[0]]
     else:
         check_col = obj
@@ -308,7 +326,8 @@ def assert_sorted(obj: Union[_pd.DataFrame, _pd.Series], by=None,
         is_sorted = all(values[i] >= values[i + 1] for i in range(len(values) - 1))
 
     direction = 'ascending' if ascending else 'descending'
-    assert is_sorted, f"Data is not sorted in {direction} order"
+    if not is_sorted:
+        raise AssertionError(f"Data is not sorted in {direction} order")
 
 
 # ---------------------------------------------------------------------------

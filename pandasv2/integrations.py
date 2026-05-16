@@ -253,8 +253,16 @@ def json_middleware(encoder: type = JSONEncoder) -> Callable:
                                 message['body'] = json.dumps(
                                     data, cls=encoder
                                 ).encode()
-                        except Exception:
-                            pass  # Leave as is if not JSON
+                        except (json.JSONDecodeError, UnicodeDecodeError, TypeError):
+                            # Body is not JSON-encodable — leave as-is
+                            pass
+                        except Exception as exc:
+                            import warnings as _w
+                            _w.warn(
+                                f"json_middleware encountered an unexpected error: {exc}",
+                                RuntimeWarning,
+                                stacklevel=2,
+                            )
                     await send(message)
                 return await app(scope, receive, send_with_json)
             else:

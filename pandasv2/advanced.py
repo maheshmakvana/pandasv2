@@ -49,14 +49,17 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 def _df_hash(df: pd.DataFrame) -> str:
-    """Fast content-based hash for a DataFrame (shape + first/last rows + dtypes)."""
+    """Fast content-based hash for a DataFrame (shape + first/last rows + dtypes).
+
+    Uses SHA-256 (not MD5) to meet modern security expectations.
+    """
     sig = (
         str(df.shape)
         + str(df.dtypes.to_dict())
         + str(df.head(3).values.tolist() if len(df) >= 3 else df.values.tolist())
         + str(df.tail(3).values.tolist() if len(df) >= 3 else "")
     )
-    return hashlib.md5(sig.encode()).hexdigest()
+    return hashlib.sha256(sig.encode()).hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -436,10 +439,32 @@ class DataFrameValidator:
 
             if rule.regex:
                 try:
-                    mask = series.dropna().astype(str).str.match(rule.regex)
-                    bad = (~mask).sum()
-                    if bad:
-                        errors.append(rule.message or f"Column '{col}' has {bad} value(s) not matching pattern '{rule.regex}'")
+                    import re as _re
+                    from concurrent.futures import ThreadPoolExecutor, TimeoutError as _TimeoutError
+                    import threading as _threading
+
+                    compiled = _re.compile(rule.regex)
+
+                    # Run the vectorised match in a worker thread with a timeout
+                    # so that ReDoS patterns cannot hang the process.
+                    def _run_match():
+                        return series.dropna().astype(str).str.match(rule.regex)
+
+                    with ThreadPoolExecutor(max_workers=1) as _pool:
+                        fut = _pool.submit(_run_match)
+                        try:
+                            mask = fut.result(timeout=2.0)
+                            bad = (~mask).sum()
+                            if bad:
+                                errors.append(
+                                    rule.message or
+                                    f"Column '{col}' has {bad} value(s) not matching pattern '{rule.regex}'"
+                                )
+                        except _TimeoutError:
+                            errors.append(
+                                f"Column '{col}' regex check timed out (pattern may be vulnerable to ReDoS). "
+                                f"Consider simplifying the pattern: {rule.regex}"
+                            )
                 except Exception as e:
                     errors.append(f"Column '{col}' regex check error: {e}")
 
