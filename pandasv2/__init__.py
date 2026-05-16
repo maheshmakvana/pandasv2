@@ -33,7 +33,7 @@ Built by Mahesh Makvana
 https://github.com/maheshmakvana/pandasv2
 """
 
-__version__ = "2.3.0"
+__version__ = "2.4.1"
 __author__ = "Mahesh Makvana"
 __license__ = "MIT"
 
@@ -178,6 +178,23 @@ from .advanced import (
 )
 
 # ---------------------------------------------------------------------------
+# Advanced features (2.4.0)
+# ---------------------------------------------------------------------------
+from .advanced import (
+    MemoryOptimizer,
+    ChunkedProcessor,
+    NestedJSON,
+    FastApply,
+    UnifiedApply,
+    ParallelGroupBy,
+    AppendCompat,
+    AppendableDataFrame,
+    DtypeOptimizer,
+    DataFrameProfiler,
+    SafeMerge,
+)
+
+# ---------------------------------------------------------------------------
 # Original web serialisation helpers (kept for backwards compatibility)
 # ---------------------------------------------------------------------------
 from .core import (
@@ -293,6 +310,11 @@ __all__ = [
     "option_context",
     # Offsets namespace
     "offsets",
+    # Advanced features (2.4.0)
+    "MemoryOptimizer", "ChunkedProcessor", "NestedJSON",
+    "FastApply", "UnifiedApply", "ParallelGroupBy",
+    "AppendCompat", "AppendableDataFrame",
+    "DtypeOptimizer", "DataFrameProfiler", "SafeMerge",
     # Web serialisation
     "JSONEncoder", "JSONDecoder", "to_json", "from_json",
     "serialize", "deserialize", "DataFrameWrapper",
