@@ -20,7 +20,7 @@ def read_file(filename):
 
 setup(
     name='pandasv2',
-    version='2.4.2',
+    version='2.4.3',
     author='Mahesh Makvana',
     author_email='maheshmakwana527@gmail.com',
     description='pandasv2: pandas drop-in replacement with memory optimization, nested JSON handling, parallel groupby, chunked processing, fast apply, unified apply/map API, safe merge validation, dtype optimization, DataFrame profiling, append compatibility for pandas 3.0, JSON serialization, diff tracking, column validation, streaming export, and seamless FastAPI/Flask/Django integration',
@@ -57,6 +57,7 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Office/Business',
         'Topic :: Scientific/Engineering :: Information Analysis',
