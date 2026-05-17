@@ -157,10 +157,10 @@ class Styler:
                                          **kwargs))
 
     def applymap(self, func: Callable, subset=None, **kwargs) -> 'Styler':
-        return Styler(self._styler.applymap(func, subset=subset, **kwargs))
+        _fn = getattr(self._styler, 'map', None) or self._styler.applymap
+        return Styler(_fn(func, subset=subset, **kwargs))
 
     def map(self, func: Callable, subset=None, **kwargs) -> 'Styler':
-        """Alias for applymap (pandas >= 2.1 renamed it)."""
         _fn = getattr(self._styler, 'map', None) or self._styler.applymap
         return Styler(_fn(func, subset=subset, **kwargs))
 

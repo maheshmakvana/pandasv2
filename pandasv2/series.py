@@ -151,16 +151,22 @@ class Series(_pd.Series):
 
     def where(self, cond, other=_np.nan, inplace=False, axis=None, level=None,
               errors='raise', try_cast=_pd.api.extensions.no_default) -> 'Series':
-        result = super().where(cond, other=other, inplace=inplace, axis=axis,
-                               level=level, errors=errors)
+        kw = dict(cond=cond, other=other, inplace=inplace, axis=axis,
+                  level=level, errors=errors)
+        if try_cast is not _pd.api.extensions.no_default:
+            kw['try_cast'] = try_cast
+        result = super().where(**kw)
         if inplace:
             return None
         return Series(result)
 
     def mask(self, cond, other=_np.nan, inplace=False, axis=None, level=None,
              errors='raise', try_cast=_pd.api.extensions.no_default) -> 'Series':
-        result = super().mask(cond, other=other, inplace=inplace, axis=axis,
-                              level=level, errors=errors)
+        kw = dict(cond=cond, other=other, inplace=inplace, axis=axis,
+                  level=level, errors=errors)
+        if try_cast is not _pd.api.extensions.no_default:
+            kw['try_cast'] = try_cast
+        result = super().mask(**kw)
         if inplace:
             return None
         return Series(result)

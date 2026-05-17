@@ -118,7 +118,11 @@ def to_datetime(
     if exact is not _pd.api.extensions.no_default:
         kw['exact'] = exact
     if infer_datetime_format is not _pd.api.extensions.no_default:
-        kw['infer_datetime_format'] = infer_datetime_format
+        try:
+            result = _pd.to_datetime(arg, **kw, infer_datetime_format=infer_datetime_format)
+            return _wrap(result) if isinstance(result, (_pd.Series, _pd.DataFrame)) else result
+        except TypeError:
+            pass
     result = _pd.to_datetime(arg, **kw)
     return _wrap(result) if isinstance(result, (_pd.Series, _pd.DataFrame)) else result
 

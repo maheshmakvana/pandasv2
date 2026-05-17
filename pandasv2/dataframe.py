@@ -212,23 +212,30 @@ class DataFrame(_pd.DataFrame):
         return result
 
     def applymap(self, func, na_action=None, **kwargs) -> 'DataFrame':
-        return DataFrame(super().applymap(func, na_action=na_action, **kwargs))
+        _apply = getattr(super(), 'map', None) or super().applymap
+        return DataFrame(_apply(func, na_action=na_action, **kwargs))
 
     def assign(self, **kwargs) -> 'DataFrame':
         return DataFrame(super().assign(**kwargs))
 
     def where(self, cond, other=_np.nan, inplace=False, axis=None, level=None,
               errors='raise', try_cast=_pd.api.extensions.no_default) -> 'DataFrame':
-        result = super().where(cond, other=other, inplace=inplace, axis=axis,
-                               level=level, errors=errors)
+        kw = dict(cond=cond, other=other, inplace=inplace, axis=axis,
+                  level=level, errors=errors)
+        if try_cast is not _pd.api.extensions.no_default:
+            kw['try_cast'] = try_cast
+        result = super().where(**kw)
         if inplace:
             return None
         return DataFrame(result)
 
     def mask(self, cond, other=_np.nan, inplace=False, axis=None, level=None,
              errors='raise', try_cast=_pd.api.extensions.no_default) -> 'DataFrame':
-        result = super().mask(cond, other=other, inplace=inplace, axis=axis,
-                              level=level, errors=errors)
+        kw = dict(cond=cond, other=other, inplace=inplace, axis=axis,
+                  level=level, errors=errors)
+        if try_cast is not _pd.api.extensions.no_default:
+            kw['try_cast'] = try_cast
+        result = super().mask(**kw)
         if inplace:
             return None
         return DataFrame(result)
